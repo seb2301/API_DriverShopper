@@ -1,13 +1,13 @@
 import { getRouteDetails } from '../utils/googleMapsHelper';
-import { DriverModel } from '../models/driverModel';
+import Driver from '../models/driverModel';
 import { RideModel } from '../models/rideModel';
 
 export const calculateRideEstimate = async (customer_id: string, origin: string, destination: string) => {
   const routeDetails = await getRouteDetails(origin, destination);
-  const drivers = await DriverModel.find();
+  const drivers = await Driver.find();
 
   const options = drivers
-    .filter((driver) => routeDetails.distance >= driver.minDistance)
+    .filter((driver) => routeDetails.distance >= driver.minKm)
     .map((driver) => {
       return {
         id: driver.id,
@@ -15,10 +15,12 @@ export const calculateRideEstimate = async (customer_id: string, origin: string,
         description: driver.description,
         vehicle: driver.vehicle,
         review: {
-          rating: driver.rating,
-          comment: driver.comment,
+          rating: driver.review.rating,
+          comment: driver.review.comment,
         },
-        value: routeDetails.distance * driver.ratePerKm,
+        value: routeDetails.distance * driver.rate,
+        photoUrl: driver.photoUrl,
+        vehiclePhotoUrl: driver.vehiclePhotoUrl
       };
     })
     .sort((a, b) => a.value - b.value);
@@ -34,11 +36,11 @@ export const calculateRideEstimate = async (customer_id: string, origin: string,
 };
 
 export const confirmRide = async (rideData: any) => {
-  const driver = await DriverModel.findById(rideData.driver.id);
+  const driver = await Driver.findById(rideData.driver.id);
   if (!driver) {
     throw new Error('Motorista não encontrado');
   }
-  if (rideData.distance < driver.minDistance) {
+  if (rideData.distance < driver.minKm) {
     throw new Error('Quilometragem inválida para o motorista');
   }
 

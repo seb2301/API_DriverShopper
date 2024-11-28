@@ -1,23 +1,37 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface IDriver extends Document {
+// Definição da interface para o Driver
+type DriverDocument = Document & {
+  id: number;
   name: string;
   description: string;
   vehicle: string;
-  rating: number;
-  comment: string;
-  ratePerKm: number;
-  minDistance: number;
-}
+  review: {
+    rating: number;
+    comment: string;
+  };
+  rate: number;
+  minKm: number;
+  photoUrl: string;
+  vehiclePhotoUrl: string;
+};
 
+// Definição do schema do motorista
 const DriverSchema: Schema = new Schema({
+  id: { type: Number, required: true },
   name: { type: String, required: true },
   description: { type: String, required: true },
   vehicle: { type: String, required: true },
-  rating: { type: Number, required: true },
-  comment: { type: String, required: true },
-  ratePerKm: { type: Number, required: true },
-  minDistance: { type: Number, required: true },
+  review: {
+    rating: { type: Number, required: true },
+    comment: { type: String, required: true }
+  },
+  rate: { type: Number, required: true },
+  minKm: { type: Number, required: true },
+  photoUrl: { type: String, required: true },
+  vehiclePhotoUrl: { type: String, required: true }
 });
 
-export const DriverModel = mongoose.model<IDriver>('Driver', DriverSchema);
+const Driver = mongoose.model<DriverDocument>('Driver', DriverSchema);
+
+export default Driver;

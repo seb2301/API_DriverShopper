@@ -2,15 +2,12 @@ import request from 'supertest';
 import app from '../app';
 import mongoose from 'mongoose';
 
+
 beforeAll(async () => {
-  await mongoose.connect(process.env.MONGO_URI_TEST || '');
+  await mongoose.connect('mongodb+srv://sebastiaofilho2301:jVAbKTxNkko4wb0e@users.i82u18s.mongodb.net/', {
+  
+  });
 });
-//beforeAll(async () => {
-  //await mongoose.connect(process.env.MONGO_URI_TEST || '', {
-  //  useNewUrlParser: true,
- //   useUnifiedTopology: true,
- // });
-//});
 
 afterAll(async () => {
   await mongoose.connection.close();
@@ -43,3 +40,4 @@ describe('Ride Controller', () => {
     expect(response.body).toHaveProperty('error_code', 'INVALID_DATA');
   });
 });
+
