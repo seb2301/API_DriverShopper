@@ -1,25 +1,16 @@
 import { Request, Response } from 'express';
 import { calculateRideEstimate, confirmRide, getRideHistory } from '../services/rideService';
-import Driver from '../models/driverModel';
 
 export const estimateRide = async (req: Request, res: Response) => {
   try {
     const { customer_id, origin, destination } = req.body;
-
     if (!customer_id || !origin || !destination) {
       return res.status(400).json({ error_code: 'INVALID_DATA', error_description: 'Dados inválidos' });
     }
-
-    const drivers = await Driver.find();
-
-
-    return res.status(200).json({
-      options: drivers,
-      origin: { latitude: 0, longitude: 0 },
-      destination: { latitude: 0, longitude: 0 },
-      distance: 10,
-      duration: '20 mins',
-    });
+    
+    
+    const rideEstimate = await calculateRideEstimate(customer_id, origin, destination);
+    return res.status(200).json(rideEstimate);
   } catch (error) {
     return res.status(500).json({ error_code: 'SERVER_ERROR', error_description: 'Erro interno do servidor' });
   }
@@ -47,7 +38,8 @@ export const confirmRideController = async (req: Request, res: Response) => {
       res.status(500).json({ error_code: 'UNKNOWN_ERROR', error_description: 'Erro desconhecido ao confirmar a viagem.' });
     }
   }
-}
+};
+
 export const getRideHistoryController = async (req: Request, res: Response) => {
   try {
     const { customer_id } = req.params;
@@ -63,7 +55,6 @@ export const getRideHistoryController = async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({ error_code: 'SERVER_ERROR', error_description: 'Erro ao obter histórico de viagens.' });
   }
-
-}
+};
 
 export default { estimateRide, confirmRideController, getRideHistoryController };

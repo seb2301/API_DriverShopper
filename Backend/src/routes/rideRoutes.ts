@@ -1,9 +1,6 @@
+// rideRoutes.ts
 import { Router } from 'express';
-import { Request, Response } from 'express';
-import { estimateRide, confirmRideController, } from '../controllers/rideController';
-export const getRideHistoryController = async (req: Request, res: Response) => {
-  
-};
+import { estimateRide, confirmRideController, getRideHistoryController } from '../controllers/rideController';
 
 const router = Router();
 

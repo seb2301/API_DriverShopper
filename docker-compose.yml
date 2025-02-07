@@ -1,27 +1,31 @@
 version: '3.8'
+
 services:
   backend:
-    build: ./backend
+    build: .
     ports:
       - "8080:8080"
-    environment:
-      - MONGO_URI=mongodb+srv://<username>:<password>@<clustername>.mongodb.net/<dbname>?retryWrites=true&w=majority
+    env_file: .env
     depends_on:
-      - mongo
-  
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
+      - mysql
+    networks:
+      - app-network
 
-  mongo:
-    image: mongo
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: your_password
+      MYSQL_DATABASE: rides_db
     ports:
-      - "27017:27017"
+      - "3306:3306"
     volumes:
-      - mongo_data:/data/db
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+
+networks:
+  app-network:
 
 volumes:
-  mongo_data:
+  mysql_data:

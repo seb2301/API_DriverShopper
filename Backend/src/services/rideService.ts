@@ -1,28 +1,32 @@
-import { getRouteDetails } from '../utils/googleMapsHelper';
-import Driver from '../models/driverModel';
-import { RideModel } from '../models/rideModel';
+import { AppDataSource } from "../data-source";
+import { Driver } from "../models/Driver";
+import { Ride } from "../models/Ride";
+import { getRouteDetails } from "../utils/googleMapsHelper";
 
-export const calculateRideEstimate = async (customer_id: string, origin: string, destination: string) => {
+export const calculateRideEstimate = async (
+  customer_id: string,
+  origin: string,
+  destination: string
+) => {
   const routeDetails = await getRouteDetails(origin, destination);
-  const drivers = await Driver.find();
+  const driverRepo = AppDataSource.getRepository(Driver);
+  const drivers = await driverRepo.find();
 
   const options = drivers
     .filter((driver) => routeDetails.distance >= driver.minKm)
-    .map((driver) => {
-      return {
-        id: driver.id,
-        name: driver.name,
-        description: driver.description,
-        vehicle: driver.vehicle,
-        review: {
-          rating: driver.review.rating,
-          comment: driver.review.comment,
-        },
-        value: routeDetails.distance * driver.rate,
-        photoUrl: driver.photoUrl,
-        vehiclePhotoUrl: driver.vehiclePhotoUrl
-      };
-    })
+    .map((driver) => ({
+      id: driver.id,
+      name: driver.name,
+      description: driver.description,
+      vehicle: driver.vehicle,
+      review: {
+        rating: driver.reviewRating,
+        comment: driver.reviewComment,
+      },
+      value: routeDetails.distance * driver.rate,
+      photoUrl: driver.photoUrl,
+      vehiclePhotoUrl: driver.vehiclePhotoUrl,
+    }))
     .sort((a, b) => a.value - b.value);
 
   return {
@@ -36,7 +40,8 @@ export const calculateRideEstimate = async (customer_id: string, origin: string,
 };
 
 export const confirmRide = async (rideData: any) => {
-  const driver = await Driver.findById(rideData.driver.id);
+  const driverRepo = AppDataSource.getRepository(Driver);
+  const driver = await driverRepo.findOne({ where: { id: rideData.driver.id } });
   if (!driver) {
     throw new Error('Motorista não encontrado');
   }
@@ -44,19 +49,27 @@ export const confirmRide = async (rideData: any) => {
     throw new Error('Quilometragem inválida para o motorista');
   }
 
-  const ride = new RideModel({
-    ...rideData,
-    date: new Date(),
+  const rideRepo = AppDataSource.getRepository(Ride);
+  const newRide = rideRepo.create({
+    customer_id: rideData.customer_id,
+    origin: rideData.origin,
+    destination: rideData.destination,
+    distance: rideData.distance,
+    duration: rideData.duration,
+    driverId: rideData.driver.id,
+    driverName: rideData.driver.name,
+    value: rideData.value,
   });
-  await ride.save();
+  await rideRepo.save(newRide);
   return { success: true };
 };
 
 export const getRideHistory = async (customer_id: string, driver_id?: string) => {
-  const query: any = { customer_id };
+  const rideRepo = AppDataSource.getRepository(Ride);
+  const query = rideRepo.createQueryBuilder("ride").where("ride.customer_id = :customer_id", { customer_id });
   if (driver_id) {
-    query['driver.id'] = driver_id;
+    query.andWhere("ride.driverId = :driver_id", { driver_id });
   }
-  const rides = await RideModel.find(query).sort({ date: -1 });
+  const rides = await query.orderBy("ride.date", "DESC").getMany();
   return rides;
 };
